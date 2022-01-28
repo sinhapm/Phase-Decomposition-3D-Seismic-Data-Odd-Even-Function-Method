@@ -1,4 +1,6 @@
 function norm_out=func_norm_mean_sd(data3d_in,data_flag_IN_XL,ns)
+
+% Author: Prashant M. Sinha, sinha.pm@gmail.com, 2021
     %% Normalization of 3D data Cube w.r.t. Mean and Standard Deviation
     
     % data3d_in = 3D data (Seismic) Dimension: TWT x Xline x Inline

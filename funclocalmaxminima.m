@@ -1,5 +1,7 @@
 function [minima_indx,maxima_indx,len_maxima_indx]=funclocalmaxminima(tracein,twt,ns,timegap)
 
+% Author: Prashant M. Sinha, sinha.pm@gmail.com, 2021
+
 % Function is used to calculate the Local Maxima and Local Minima
 % for a trace data constrained by the time gap (sec)
 % Start and End Point of the seismic trace by default assigned as Local

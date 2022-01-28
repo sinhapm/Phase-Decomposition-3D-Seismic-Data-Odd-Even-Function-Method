@@ -3,6 +3,9 @@ function [out_phasedecom] = pdoe3dfilter2d( seis3d_in1, sampint, timegap,...
             inline2Dsmooth_flag, inline2Dsmoothingsize, ...
             xline2Dsmoothing_flag ,xline2Dsmoothingsize , norm_flag)
 
+% Function & Sub-Functions call to perform the Phase Decomposition 
+% Author: Prashant M. Sinha, sinha.pm@gmail.com, 2021
+
     %% As cos(-x)=cos(x), change phasecomp value of -180 to 180
     if phasecomp==-180
         phasecomp=180;

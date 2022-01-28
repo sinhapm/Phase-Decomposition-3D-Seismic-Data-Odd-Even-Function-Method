@@ -1,5 +1,7 @@
 function pars = od_getparameters() 
 
+% Function call to initialize the opendtect get parameters
+
 % Both function files od_doprocess() and od_getparametrs() are the initial 
 % requisite function files to get the input seismic data (single 3D seismic
 % volume only) and other input parameters via method 
@@ -46,6 +48,8 @@ function pars = od_getparameters()
    % Single Seismic 3D Volume as input
    % Minimum Matlab Runtime Version 9.8
    
+   % Author: Prashant M. Sinha, sinha.pm@gmail.com, 2021
+
     pars.nrinputs = 1; 
     
     pars.Sampint = 4;

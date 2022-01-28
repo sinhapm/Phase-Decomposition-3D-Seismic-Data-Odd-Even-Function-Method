@@ -1,4 +1,8 @@
 function [indx_range]=funcwinindexrange(inputdata,ws,dt,N_2)
+
+% Function call to find the index range of window size
+% Author: Prashant M. Sinha, sinha.pm@gmail.com, 2021
+
     [~,apos_max_indx]=max(abs(inputdata));
     indx_range=(apos_max_indx-floor(floor(ws/dt)/2)):(apos_max_indx+floor(floor(ws/dt)/2));
 

@@ -1,5 +1,7 @@
 function out = od_doprocess(pars,seismicin) 
-    
+
+% Function call to initialize the opendtect process parameters
+
 % Both function files od_doprocess() and od_getparametrs() are the initial 
 % requisite function files to get the input seismic data (single 3D seismic
 % volume only) and other input parameters via method 
@@ -18,6 +20,7 @@ function out = od_doprocess(pars,seismicin)
 % Matlab Runtime 9.8 or later, to run the program without MATLAB License 
 % https://in.mathworks.com/products/compiler/matlab-runtime.html
 
+% Author: Prashant M. Sinha, sinha.pm@gmail.com, 2021
 
     sampint = pars.Sampint;
     timegap= pars.MinTimeGap;
