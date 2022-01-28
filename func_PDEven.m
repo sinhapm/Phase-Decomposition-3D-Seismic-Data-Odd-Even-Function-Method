@@ -1,7 +1,7 @@
-function return_phasecomp=func_PDOdd(phasecomp,combinationflag,...
+function return_phasecomp=func_PDEven(phasecomp,combinationflag,...
     singletracedatain,dt,twt,ns,timegap,ws,epsilon_value,freq)
 
-% Function call to perform the Phase Decomposition - Odd Part
+% Function call to perform the Phase Decomposition - Even Part
 % Author: Prashant M. Sinha, sinha.pm@gmail.com, 2021
 
     %% Initialize the Single Trace Matrix and set Window gate around Apex 
@@ -16,6 +16,7 @@ function return_phasecomp=func_PDOdd(phasecomp,combinationflag,...
     
         %% Segment trace into odd-even trace segment and Compute the Phase Decomposed Return Trace & Phase Response
     for cnt=1:len_maxima_indx
+
         % "d_indx_org" is correponding segmented trace data contain within two minima
         d_indx_org=singletracedatain(minima_indx(cnt):minima_indx(cnt+1),1);
         
@@ -48,8 +49,8 @@ function return_phasecomp=func_PDOdd(phasecomp,combinationflag,...
                 d_indx_flag=ones(minima_indx(cnt+1)-minima_indx(cnt)+1,1);
             end
         
-            %% Calculate Odd data of segmented trace, & its Positive Part
-            fxodd=0.5*(d_indx-flipud(d_indx));
+            %% Calculate Even and Odd data of segmented trace, & its Positive Part
+            fxeven=0.5*(d_indx+flipud(d_indx));
             
             N = length(d_indx);
             t=(-0.5*(N-1)*dt:dt:0.5*(N-1)*dt);
@@ -58,73 +59,89 @@ function return_phasecomp=func_PDOdd(phasecomp,combinationflag,...
             %% Positve Half of the Signal
             N_2 = ceil(N/2);
             
-            % Positive Part of Segmented Odd trace
-            fxodd_pos=fxodd(N_2:N);
+            % Positive Part of Segmented Even trace
+            fxeven_pos=fxeven(N_2:N);
             t_pos=t(N_2:N);
             
-            %% Find the Amplitude Apex of the Odd signal         
-            [indx_range_odd]=funcwinindexrange(fxodd_pos,ws,dt,N_2);
-            t_pos_apex_odd=t_pos(indx_range_odd);
-            fxodd_pos_apex=fxodd_pos(indx_range_odd);
-         
-        %% Cosine & Sine Frequency Transform of Odd Signals
-        OFs=zeros(1,numel(freq));
+            %% Find the Amplitude Apex of the signal 
+            % Find the Amplitude Apex of the signal of Positive Part
+            [indx_range_even]=funcwinindexrange(fxeven_pos,ws,dt,N_2);         
+            t_pos_apex_even=t_pos(indx_range_even);
+            fxeven_pos_apex=fxeven_pos(indx_range_even);
+          
+        %% Cosine & Sine Frequency Transform of Even-Odd Signals
+        EFs=zeros(1,numel(freq));
         
         for ii=1:numel(freq)
             
-            if (numel(indx_range_odd)>1)
-                OFs(ii)=trapz(t_pos_apex_odd,(fxodd_pos_apex.*sin(2*pi*freq(ii)*t_pos_apex_odd)));
+            if (numel(indx_range_even)>1)
+                EFs(ii)=trapz(t_pos_apex_even,(fxeven_pos_apex.*cos(2*pi*freq(ii)*t_pos_apex_even)));
             else
-                OFs(ii)=fxodd_pos_apex.*sin(2*pi*freq(ii)*t_pos_apex_odd);
+                EFs(ii)=fxeven_pos_apex.*cos(2*pi*freq(ii)*t_pos_apex_even);
             end
             
         end
+                
+        % Compute Phase of Even Segment
+        EFs=2*EFs;               
+        phase_EFs=atan2(imag(EFs),real(EFs))*180/pi;
         
+        % Find the index position of Phase==-180
+        TF_phase_EFs_m180=(phase_EFs==-180);
         
-        % Compute Phase of Odd Singal
-        OFs=-2i*OFs;
-        phase_OFs=atan2(imag(OFs),real(OFs))*180/pi;
-                    
+        %Replace -180 phase_EFs values to 180
+        phase_EFs(TF_phase_EFs_m180)=180;
+        
         %% Phase Filter Flag within Phase Component +/- Phase Tolerance
         
-        % Filter out the -90/90 degree i.e. Odd phase for all frequencies
-        % as 1 (on) otherwise 0 (off) value - Odd Component Phase
+        % Filter out the zero/180/-180 degree phase for all frequencies
+        % as 1 (on) otherwise 0 (off) value - Even Component Phase
+        
         if combinationflag==1
-            phase_flag=(abs(phase_OFs)>(abs(phasecomp)-phasetolerance))...
-                .* (abs(phase_OFs)<(abs(phasecomp)+phasetolerance));
+            phase_flag1=(phase_EFs>(0-phasetolerance))...
+                .* (phase_EFs<(0+phasetolerance));
+            
+            phase_flag2=(phase_EFs>(180-phasetolerance))...
+                .* (phase_EFs<(180+phasetolerance));
+            
+            phase_flag=phase_flag1 + phase_flag2;
+            
         else
-            phase_flag=(phase_OFs>(phasecomp-phasetolerance))...
-                .* (phase_OFs<(phasecomp+phasetolerance));
+            phase_flag=(phase_EFs>(phasecomp-phasetolerance))...
+                .* (phase_EFs<(phasecomp+phasetolerance));
         end
-        OFs_phasecomp_flagged=imag(OFs).*phase_flag;
+        
+
+        
+        EFs_phasecomp_flagged_0=EFs.*phase_flag;
         
         %% Time Domanin 'fx'= Inverse Cosine & Sine Transform of Fourier Even-Odd Transform
         % Estimate Phase filter Seismic Reconstruction
         
-        % Initialize Positive Part Odd of fx
-        fxodd_pos_recons_tmp=zeros(N_2,1);
-        
-        % Compute Phase component filtered time doamin fx (Postive Part) from Cosine-Sine Fourier Transform
+        % Initialize Positive Part Even-Odd of fx
+        fxeven_pos_recons_tmp=zeros(N_2,1);
+
+        % Compute Phase component filtered time doamin fx (Postive Part) from Cosine Fourier Transform
         for ii=1:N_2
-            fxodd_pos_recons_tmp(ii,1)=trapz(freq,(OFs_phasecomp_flagged.*sin(2*pi*freq*t_pos(ii))));
+            fxeven_pos_recons_tmp(ii,1)=trapz(freq,(EFs_phasecomp_flagged_0.*cos(2*pi*freq*t_pos(ii))));
         end
         
         % Compute Phase component filtered full Part of Even-Odd fx Segment
-        fxodd_recons_tmp=[-1*flipud(fxodd_pos_recons_tmp(2:end));fxodd_pos_recons_tmp];
-
+        fxeven_recons_tmp=[flipud(fxeven_pos_recons_tmp(2:end));fxeven_pos_recons_tmp];
         
         % Remove the zero padding data points which was added to
         % make the segment data symmetrical about local maxima
         % point attributed from inst_amplitude
-        fxodd_recons=fxodd_recons_tmp(d_indx_flag>0);
-        
-        %% Average Out Reconstructed Seismic Trace & Phase Response Segment point at common Local Minima
+        fxeven_recons=fxeven_recons_tmp(d_indx_flag>0);
+
+        %% Average Out Reconstructed Seismic Trace & Phase Response Segment point at common
+        % Local Minima
         if cnt>1
-            fxodd_recons(1)=0.5*(fxodd_recons(1)+return_phasecomp(minima_indx(cnt),1));           
+            fxeven_recons(1)=0.5*(fxeven_recons(1)+return_phasecomp(minima_indx(cnt),1));            
         end
         
         % Append the recontructed segment to make reconstructed seismic trace
-        return_phasecomp(minima_indx(cnt):minima_indx(cnt+1),1)=fxodd_recons;
+        return_phasecomp(minima_indx(cnt):minima_indx(cnt+1),1)=fxeven_recons;
 
         end % if sum(abs(d_indx))<=epsilon_value
     end % Loop for cnt=1:len_maxima_indx
